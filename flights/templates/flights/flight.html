@@ -1,0 +1,50 @@
+{% extends "flights/base.html" %}
+
+{% block title %}
+    Flight {{ flight.id }}
+{% endblock %}
+
+{% block body %}
+    <h1>Flights {{ flight.id }}</h1>
+    <ul>
+        <li>Origin: {{ flight.origin }}</li>
+        <li>Destination: {{ flight.destination }}</li>
+    </ul>
+    <h2>Passengers</h2>
+    <ul>
+        {% for passenger in passengers %}
+            <li>{{ passenger }}</li>
+
+        <!-- if the for loop never runs, if nothing ever happens -->
+        {% empty %}
+            <li>No passengers.</li>
+        {% endfor %}
+    </ul>
+    <hr>
+    <h2>Add a Passenger</h2>
+
+    {% if non_passengers %}
+    <form action="{% url 'book' flight.id %}" method="post">
+
+        <!-- in the views.py in the book function, when I tried to extract the data from the post request, I was looking for something which name is passenger-->
+
+        <!-- cross site request forgery, any time dealing with a form in django, you're going to need a add little bit of sintax
+                which means, when I submit the formm this token is submitted along with it, and django server can verify that it is
+                indeed my web application that is submitting this request
+        -->
+
+        {% csrf_token %}
+        <select name="passenger">
+            {% for passenger in non_passengers %}
+                <option value="{{ passenger.id }}">{{ passenger }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Book Flight"/>
+        </form>
+        {% else %}
+        <div>No passengers to add.</div>
+    {% endif %}
+
+    <!-- when getting here, take me to the index -->
+    <a href="{% url 'index' %}">Back to full listing</a>
+{% endblock %}
