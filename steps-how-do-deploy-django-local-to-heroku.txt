@@ -1,0 +1,149 @@
+install python 3.6.8 or newer (this project is made in python 3.6.8)
+
+install virtualenv in global python
+
+open prompt on project folder and execute python -m venv env
+
+get on env/Scripst and type activate.bat (if using cmd prompt) or activate if using power shell
+
+once running from virtualenv (env), type pip install django
+
+get on root folder and type python manage.py runserver (this verifies that app is running locally)
+
+if running as expected, press ctrl + z and wait app to close
+
+install gunicorn (pip install gunicorn)
+
+on heroku sqlite33 does not work. Since our local db is sqlite3, we need to tell heroku to install postgres and make and adaptation that converts sqlite3 local db structure in heroku postgres db. registers in local sqlite3 db WONT pass to heroku postgres db after deploying.
+
+to connect our local db to postgres on heroku, install psycopg2 (pip install psycopg2==2.7.4)
+
+to connect the project and the database manager install dj-database-url (pip install dj-database-url)
+
+to protect sensible data  on server (tokens, passwords) let's use enviroment variables. install python-decouple (pip install python-decouple)
+
+in settings.py change DEBUG to False and ALLOWED_HOSTS = ['*']
+
+# DEBUG = True
+DEBUG = False
+
+# ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS = ['*']
+
+change database settings to decouple
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#     }
+# }
+
+import dj_database_url
+from decouple import config
+
+DATABASES = {
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL')
+    )
+}
+
+update static files section on settings.py and install whitenoise (pip install whitenoise) library in order to tell heroku to deal with static files
+django by default does not allow to do so in production servers.
+
+update requirements.txt (pip freeze > requierements.txt)
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/2.0/howto/static-files/
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, 'static'),
+)
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+add whitenoise in middleware section
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+]
+
+adds static config in urls.py and import conf
+
+"""djangoair URL Configuration
+
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/2.0/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+Including another URLconf
+    1. Import the include() function: from django.urls import include, path
+    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+"""
+from django.contrib import admin
+from django.urls import include, path
+
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path('', include('flights.urls')),
+    path('admin/', admin.site.urls),
+]   +static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+create static folder in root directory (this is mandatory for heroku)
+since git does not support empty folder, add a .keep file
+
+generate Procfile in root directory. it has to have the project name (in our case is djangoair)
+
+web: gunicorn djangoair.wsgi --log-file -
+
+git add, and git commit all the files.
+
+now, let's create an app in heroku
+
+heroku login
+
+heroku create appname (in our case it is djangoair)
+
+heroku create djangoair
+
+add heroke remote repository
+
+heroku git:remote -a djangoair
+
+create postgresql db in heroku
+
+heroku addons:create heroku-postgresql:hobby-dev
+
+push to heroku
+
+git push heroku master
+
+migrate in heroku
+
+heroku run python manage.py migrate -a appname (in our case djangoair)
+
+heroku run python manage.py migrate -a djangoair
+
+create django super user
+
+heroku run python manage.py createsuperuser -a appname (in our case djangoair)
+
+heroku run python manage.py createsuperuser -a djangoair
