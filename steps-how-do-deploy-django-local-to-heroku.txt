@@ -130,11 +130,37 @@ heroku git:remote -a djangoair
 
 create postgresql db in heroku
 
-heroku addons:create heroku-postgresql:hobby-dev
+heroku addons:create heroku-postgresql:hobby-dev --app appname (in our case djangoair)
+
+heroku addons:create heroku-postgresql:hobby-dev --app djangoair
 
 push to heroku
 
 git push heroku master
+
+before migrating in heroku, let's push our local db.
+
+local db has to be already set up via cli as mentioned on readme.md
+
+local db has to have data already from django app in local git branch
+
+in this case this is the first time we're going to make the db pushing
+
+heroku pg:push localdb DATABASE_URL --app appname
+
+heroku pg:push pruebadb DATABASE_URL --app djangoair
+
+enter local db password anytime it is prompted
+
+when pushing after the first time, heroku db has to be resetted.
+
+heroku pg:reset --app appname --confirm appname (in our case djangoair) 
+
+heroku pg:reset --app djangoair --confirm djangoair
+
+heroku pg:push pruebadb DATABASE_URL --app djangoair
+
+enter local db password anytime it is prompted
 
 migrate in heroku
 
