@@ -176,21 +176,53 @@ pip install virtualenv
 git clone https://github.com/Yoimer/django-local-heroku.git --branch local --single-branch
 ```
 
-```
-Give the example
-```
-
-And repeat
+**Get on django-local-heroku folder open cmd (or PowerShell) and create an virtual enviroment**
 
 ```
-until finished
+python -m venv env
 ```
 
-End with an example of getting some data out of the system or using it for a little demo
+**cd to env\Scripts folder and activate the virtual enviroment**
+
+```
+activate.bat (if using cmd)
+```
+
+```
+Activate.ps1 (if using PowerShell)
+```
+
+**Install all the python packages required using pip**
+```
+pip install -r requirements.txt
+```
 
 ## Running the tests
 
-Explain how to run the automated tests for this system
+**In order to connect for the first time with the postgresql db or apply any change to your data, migrate**
+
+```
+python manage.py migrate 
+```
+
+**Creating a Django db super user (this has nothing to do with postgresql server)**
+
+```
+python manage.py createsuperuser
+```
+
+**Start the Django Server**
+
+Run the Django runserver command and go to your browser and type http://127.0.0.1:8000/ 
+
+```
+python manage.py runserver
+```
+
+**Start Adding values to the db**
+
+Type http://127.0.0.1:8000/admin on browser and enter the credentials previously set with python manage.py createsuperuser
+
 
 ### Break down into end to end tests
 
