@@ -330,7 +330,7 @@ heroku login
 **Create an app including its name (in our case it is djangoair)**
 
 ```
-heroku create appname djangoair
+heroku create -a djangoair
 ```
 
 **Add heroku git remote repository**
