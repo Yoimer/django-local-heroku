@@ -223,53 +223,173 @@ python manage.py runserver
 
 Type http://127.0.0.1:8000/admin on browser and enter the credentials previously set with python manage.py createsuperuser
 
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
+Once values from db are populated on index file, it is time to move to production (heroku)
 
 ## Deployment
 
-Add additional notes about how to deploy this on a live system
+We need to create a new branch from the local branch. We'll call it master
 
-## Built With
+```
+git checkout master
+```
 
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
+We need to modify the **settings.py** file inside the **djangoair** folder
 
-## Contributing
+Heroku requires this adaption in order to work as expected.
 
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
+Modify **DEBUG** to False and **ALLOWED_HOSTS** to all.
 
-## Versioning
+```python
+# DEBUG = True
+DEBUG = False
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
+# ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
+```
 
-## Authors
+Add **whitenoise.middleware.WhiteNoiseMiddleware** in the **MIDDLEWARE** list
 
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
+```python
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+]
+```
+Remove the local database configuration on **DATABASES** and add the **decouple** configuration
 
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+Everytime we create a database on heroku it saves the credentials on a variable called **'DATABASE_URL'**
 
-## License
+Using the **decouple** configuration prevents harcoding heroku crendentials on **settings.py**
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 
-## Acknowledgments
+```python
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'pruebadb',
+#         'USER': 'prueba',
+#         'PASSWORD': '12345',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
 
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
+import dj_database_url
+from decouple import config
+
+DATABASES = {
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL')
+    )
+}
+```
+
+Let's add the Django **static** files configuration.
+
+We need to create a folder called **static** inside the **root project (django-local-heroku)** folder
+
+Since **git** does not support an empty folder, we'll create a **.keep** file inside of **static** with nothing as content
+
+``` python
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, 'static'),
+)
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+```
+
+**Generate Procfile in root directory. It has to have the project name (in our case is djangoair)**
+
+```
+web: gunicorn djangoair.wsgi --log-file -
+```
+
+**Sign up on heroku for a new account**
+
+https://www.heroku.com
+
+**Download and install the **heroku cli** depending on your **OS**
+
+https://devcenter.heroku.com/articles/heroku-cli
+
+**Heroku is installed in the **global path** by default. Login with your account from **cmd** by typing:**
+
+```
+heroku login
+```
+
+**Create an app including its name (in our case it is djangoair)**
+
+```
+heroku create appname djangoair
+```
+
+**Add heroku git remote repository**
+
+```
+heroku git:remote -a djangoair
+```
+
+**Create postgresql db in heroku**
+
+heroku addons:create heroku-postgresql:hobby-dev --app appname (in our case djangoair)
+
+```
+heroku addons:create heroku-postgresql:hobby-dev --app djangoair
+```
+
+**Push to heroku**
+
+```
+git push heroku master
+```
+
+Before migrating in heroku, let's push our local db.
+
+Local db has to be already set up via cli as mentioned on readme.md
+
+Local db has to have data already from django app in local git branch **(As explained before)**
+
+In this case this is the first time we're going to make the db pushing
+
+heroku pg:push localdb DATABASE_URL --app appname
+
+```
+heroku pg:push pruebadb DATABASE_URL --app djangoair
+```
+**Enter local db password anytime it is prompted**
+
+## When pushing after the **first time**, heroku db has to be resetted.
+
+heroku pg:reset --app appname --confirm appname (in our case djangoair)
+
+```
+heroku pg:reset --app djangoair --confirm djangoair
+```
+
+Enter local db password anytime it is prompted
+
+**Migrate in heroku**
+
+heroku run python manage.py migrate -a appname (in our case djangoair)
+
+```
+heroku run python manage.py migrate -a djangoair
+```
+
+**Create django super user on heroku**
+
+heroku run python manage.py createsuperuser -a appname (in our case djangoair)
+
+```
+heroku run python manage.py createsuperuser -a djangoair
+```
